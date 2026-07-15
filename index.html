@@ -5,13 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Planner</title>
 <meta name="theme-color" content="#3454D1">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- PWA Manifest with embedded SVG icon -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Planner Pro","short_name":"Planner","display":"standalone","start_url":".","background_color":"%23EEF1F6","theme_color":"%233454D1","orientation":"portrait","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 width=%22512%22 height=%22512%22><rect width=%22512%22 height=%22512%22 rx=%22110%22 fill=%22%233454D1%22/><path d=%22M150 210l60 60L362 140%22 stroke=%22white%22 stroke-width=%2240%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
-
+<link rel="manifest" href='data:application/manifest+json,{"name":"Planner","short_name":"Planner","display":"standalone","start_url":".","background_color":"%23EEF1F6","theme_color":"%233454D1"}'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -86,7 +80,7 @@
   .fab svg { width: 17px; height: 17px; }
 
   nav.bottom { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
-  nav.bottom button { flex: 1; background: none; border: none; padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--ink-dim); font-size: 9.5px; cursor: pointer; }
+  nav.bottom button { flex: 1; background: none; border: none; padding: 9px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--ink-dim); font-size: 10.5px; cursor: pointer; }
   nav.bottom button svg { width: 20px; height: 20px; }
   nav.bottom button.active { color: var(--accent); }
 
@@ -182,19 +176,6 @@
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
   .confetti span { position: absolute; top: -10px; width: 8px; height: 8px; border-radius: 2px; animation: fall 1.4s ease-in forwards; }
   @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-
-  /* AI Assistant Layout styles */
-  .ai-chat-wrap { display: flex; flex-direction: column; gap: 12px; height: calc(100vh - 180px); }
-  .ai-output-box { flex: 1; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .ai-msg { display: flex; flex-direction: column; max-width: 85%; padding: 11px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-  .ai-msg.system { background: var(--surface-2); color: var(--ink); align-self: flex-start; border-bottom-left-radius: 2px; }
-  .ai-msg.user { background: var(--accent); color: var(--accent-ink); align-self: flex-end; border-bottom-right-radius: 2px; }
-  .ai-input-row { display: flex; gap: 8px; align-items: center; }
-  .ai-input-row input { flex: 1; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-size: 14px; outline: none; }
-  .ai-input-row input:focus { border-color: var(--accent); }
-  .ai-schedule-block { border-left: 3px solid var(--accent); padding-left: 10px; margin: 8px 0; }
-  .ai-schedule-time { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--accent); }
-  .ai-schedule-desc { font-size: 13.5px; font-weight: 500; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -219,7 +200,6 @@
     <div class="tab-panel" id="panel-focus"></div>
     <div class="tab-panel" id="panel-student"></div>
     <div class="tab-panel" id="panel-progress"></div>
-    <div class="tab-panel" id="panel-ai"></div>
   </main>
 </div>
 
@@ -248,10 +228,6 @@
   <button data-tab="progress">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
     Progress
-  </button>
-  <button data-tab="ai">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/><circle cx="12" cy="12" r="10" stroke-dasharray="4 4"/></svg>
-    AI Agent
   </button>
 </nav>
 
@@ -370,19 +346,6 @@
 (function () {
 "use strict";
 
-/* ---------------- Service Worker Setup ---------------- */
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    self.addEventListener('install', e => self.skipWaiting());
-    self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-    self.addEventListener('fetch', e => {});
-  `;
-  const blob = new Blob([swCode], {type: 'application/javascript'});
-  navigator.serviceWorker.register(URL.createObjectURL(blob))
-    .then(() => console.log('SW setup completed successfully.'))
-    .catch(err => console.error('SW configuration failed:', err));
-}
-
 /* ---------------- Storage ---------------- */
 const LS = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v === null || v === undefined ? d : v; } catch (e) { return d; } },
@@ -411,7 +374,6 @@ const state = {
   search: "", statusFilter: "all", categoryFilter: null, sort: "due",
   activeTab: "tasks", editingId: null, lastDeleted: null,
   calView: "month", calCursor: new Date(), calSelected: null,
-  aiChatHistory: LS.get("pl_ai_chat", [{ role: "system", text: "Welcome to your AI Daily Planner. Click 'Generate Daily Itinerary' below, or tell me what to do (e.g., 'add task Workout at 6 PM tomorrow' or 'schedule study session')." }])
 };
 
 function save(key, val) { LS.set(key, val); }
@@ -423,7 +385,6 @@ function saveExams() { save("pl_exams", state.exams); }
 function saveAssignments() { save("pl_assignments", state.assignments); }
 function saveTimetable() { save("pl_timetable", state.timetable); }
 function savePomo() { save("pl_pomo_sessions", state.pomoSessions); }
-function saveAIChat() { save("pl_ai_chat", state.aiChatHistory); }
 
 /* ---------------- Theme ---------------- */
 function applyTheme(t) { document.documentElement.setAttribute("data-theme", t); localStorage.setItem("pl_theme", t); }
@@ -464,7 +425,7 @@ setInterval(() => {
 }, 20000);
 
 /* ---------------- Tab nav ---------------- */
-const TAB_LABELS = { tasks: "Tasks", calendar: "Calendar", focus: "Focus mode", student: "Student mode", progress: "Progress", ai: "AI Planner" };
+const TAB_LABELS = { tasks: "Tasks", calendar: "Calendar", focus: "Focus mode", student: "Student mode", progress: "Progress" };
 document.querySelectorAll("nav.bottom button").forEach(btn => {
   btn.addEventListener("click", () => {
     state.activeTab = btn.dataset.tab;
@@ -481,7 +442,6 @@ function renderActiveTab() {
   else if (state.activeTab === "focus") renderFocusTab();
   else if (state.activeTab === "student") renderStudentTab();
   else if (state.activeTab === "progress") renderProgressTab();
-  else if (state.activeTab === "ai") renderAITab();
 }
 
 /* ---------------- Priority meta ---------------- */
@@ -1521,197 +1481,9 @@ document.getElementById("importFile").addEventListener("change", e => {
   e.target.value = "";
 });
 
-/* ================= AI PLANNER TAB ================= */
-function renderAITab() {
-  const panel = document.getElementById("panel-ai");
-  panel.innerHTML = `
-    <div class="ai-chat-wrap">
-      <div style="display:flex; gap:8px;">
-        <button class="btn-primary" id="aiGenerateBtn" style="font-size:13px; padding:10px 14px;">⚡ Generate Daily Itinerary</button>
-        <button class="btn-secondary" id="aiClearBtn" style="flex:0; font-size:13px; padding:10px 14px; white-space:nowrap;">Clear Chat</button>
-      </div>
-      <div class="ai-output-box" id="aiChatOutput"></div>
-      <div class="ai-input-row">
-        <input type="text" id="aiInput" placeholder="Ask AI to plan, reschedule, or add a task...">
-        <button class="icon-btn" id="aiSendBtn" style="background:var(--accent); color:var(--accent-ink);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("aiGenerateBtn").addEventListener("click", generateDailySchedule);
-  document.getElementById("aiClearBtn").addEventListener("click", () => {
-    state.aiChatHistory = [{ role: "system", text: "Chat cleared. Request a plan or input actions anytime." }];
-    saveAIChat();
-    renderAIChatMessages();
-  });
-  document.getElementById("aiSendBtn").addEventListener("click", handleAIChatSubmit);
-  document.getElementById("aiInput").addEventListener("keypress", e => { if (e.key === "Enter") handleAIChatSubmit(); });
-
-  renderAIChatMessages();
-}
-
-function renderAIChatMessages() {
-  const container = document.getElementById("aiChatOutput");
-  if (!container) return;
-  container.innerHTML = "";
-  state.aiChatHistory.forEach(msg => {
-    const div = document.createElement("div");
-    div.className = `ai-msg ${msg.role === 'user' ? 'user' : 'system'}`;
-    div.innerHTML = msg.text;
-    container.appendChild(div);
-  });
-  container.scrollTop = container.scrollHeight;
-}
-
-function handleAIChatSubmit() {
-  const inputEl = document.getElementById("aiInput");
-  const query = inputEl.value.trim();
-  if (!query) return;
-
-  state.aiChatHistory.push({ role: "user", text: escapeHtml(query) });
-  inputEl.value = "";
-  renderAIChatMessages();
-
-  setTimeout(() => {
-    const response = processAIEngine(query);
-    state.aiChatHistory.push({ role: "system", text: response });
-    saveAIChat();
-    renderAIChatMessages();
-  }, 350);
-}
-
-function generateDailySchedule() {
-  const today = new Date();
-  const todayDOW = today.getDay();
-  const now = today.getTime();
-
-  // Retrieve today's actual tasks
-  const todaysTasks = state.tasks.filter(t => !t.completed && t.dueDateTime && isSameDay(new Date(t.dueDateTime), today));
-  const activeHighPriority = state.tasks.filter(t => !t.completed && (t.priority === "urgent" || t.priority === "high"));
-  const todayClasses = state.timetable.filter(e => e.day === todayDOW);
-  const pendingAssignments = state.assignments.filter(a => a.status !== "submitted");
-
-  let scheduleHtml = `<div style="font-weight:700; font-size:15px; margin-bottom:10px;">📋 Generated Itinerary for ${today.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</div>`;
-  
-  let timeCursor = 8; // Start scheduling at 8:00 AM
-  
-  if (todayClasses.length > 0) {
-    scheduleHtml += `<div class="field-label">Scheduled Classes</div>`;
-    todayClasses.forEach(c => {
-      scheduleHtml += `
-        <div class="ai-schedule-block">
-          <div class="ai-schedule-time">${c.time}</div>
-          <div class="ai-schedule-desc">Class: ${escapeHtml(c.subject)}</div>
-        </div>`;
-    });
-  }
-
-  scheduleHtml += `<div class="field-label">Optimized Task Block Allocation</div>`;
-  
-  const tasksToPlan = [...todaysTasks, ...activeHighPriority.slice(0, 3)];
-  const uniqueTasks = Array.from(new Set(tasksToPlan.map(t => t.id))).map(id => state.tasks.find(t => t.id === id));
-
-  if (uniqueTasks.length === 0) {
-    scheduleHtml += `<div class="meta-text" style="margin:10px 0;">No strict tasks found for today. Adding open focus slots.</div>`;
-    scheduleHtml += `
-      <div class="ai-schedule-block">
-        <div class="ai-schedule-time">09:00 AM</div>
-        <div class="ai-schedule-desc">Deep Focus Block (Work on core projects)</div>
-      </div>
-      <div class="ai-schedule-block">
-        <div class="ai-schedule-time">02:00 PM</div>
-        <div class="ai-schedule-desc">Administrative Tasks & Maintenance</div>
-      </div>`;
-  } else {
-    uniqueTasks.forEach((t, i) => {
-      const slotTime = timeCursor + i * 2;
-      const formattedTime = slotTime > 12 ? `${slotTime - 12}:00 PM` : `${slotTime}:00 ${slotTime === 12 ? 'PM' : 'AM'}`;
-      const cat = catById(t.category);
-      scheduleHtml += `
-        <div class="ai-schedule-block" style="border-left-color: ${cat.color}">
-          <div class="ai-schedule-time">${formattedTime} (Focus Block)</div>
-          <div class="ai-schedule-desc">${cat.icon} ${escapeHtml(t.title)} <span class="badge" style="background:${PRIORITY_COLOR[t.priority]}; color:white; font-size:9px; padding:2px 5px;">${t.priority}</span></div>
-          ${t.description ? `<div class="subject-sub" style="margin-top:2px;">${escapeHtml(t.description)}</div>` : ''}
-        </div>`;
-    });
-  }
-
-  if (pendingAssignments.length > 0) {
-    scheduleHtml += `<div class="field-label">Assignment Deadline Strategy</div>`;
-    const nextAsg = pendingAssignments[0];
-    scheduleHtml += `
-      <div class="ai-schedule-block" style="border-left-color: var(--urgent)">
-        <div class="ai-schedule-time">04:00 PM</div>
-        <div class="ai-schedule-desc">Work on pending assignment: "${escapeHtml(nextAsg.title)}"</div>
-      </div>`;
-  }
-
-  state.aiChatHistory.push({ role: "system", text: scheduleHtml });
-  saveAIChat();
-  renderAIChatMessages();
-}
-
-function processAIEngine(query) {
-  const lower = query.toLowerCase();
-  
-  if (lower.startsWith("add task ")) {
-    const rawText = query.substring(9).trim();
-    const parsed = parseVoiceText(rawText);
-    if (parsed.title) {
-      const newTask = {
-        id: uid(),
-        title: parsed.title,
-        description: "Added automatically via AI Assistant",
-        category: state.categories[0].id,
-        priority: "medium",
-        dueDateTime: parsed.dueMs,
-        reminderEnabled: !!parsed.dueMs,
-        completed: false,
-        completedAt: null,
-        createdAt: Date.now(),
-        notified: false,
-        pinned: false,
-        subtasks: [],
-        recurrence: parsed.recurrence || "none",
-        link: ""
-      };
-      state.tasks.unshift(newTask);
-      saveTasks();
-      let feedback = `<strong>Action Executed:</strong> Added task "<em>${escapeHtml(parsed.title)}</em>"`;
-      if (parsed.dueMs) feedback += ` due on ${new Date(parsed.dueMs).toLocaleString()}`;
-      return feedback + `.`;
-    }
-  }
-
-  if (lower.includes("status") || lower.includes("summary") || lower.includes("analyze")) {
-    const incomplete = state.tasks.filter(t => !t.completed).length;
-    const completed = state.tasks.filter(t => t.completed).length;
-    const urgent = state.tasks.filter(t => !t.completed && t.priority === "urgent").length;
-    const streak = computeStreak();
-    return `
-      <strong>System Workload Assessment:</strong><br>
-      • Active tasks: ${incomplete}<br>
-      • Completed tasks: ${completed}<br>
-      • Critical (Urgent) tasks: ${urgent}<br>
-      • Current consistent daily streak: ${streak} days.<br><br>
-      To process optimal productivity, schedule focus intervals via Pomodoro module first.
-    `;
-  }
-
-  if (lower.includes("break") || lower.includes("rest")) {
-    return `<strong>Productivity Protocol:</strong> Based on continuous workflow principles, implement a hard break schedule: 50 minutes high-density execution followed by 10 minutes active physical movement. Do not process digital inputs during recovery periods.`;
-  }
-
-  return `<strong>Local Execution Engine:</strong> Instruction parsed. Command not mapped. To schedule directly, click the 'Generate Daily Itinerary' button or enter instructions using the exact pattern: <em>add task [title] at [time] [tomorrow/weekday]</em>.`;
-}
-
 /* ================= INIT ================= */
 renderTasksTab();
 })();
 </script>
 </body>
 </html>
-
-```
